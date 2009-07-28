@@ -23,19 +23,21 @@ class Service(object):
         Makes a call to a webservice endpoint and extracts the relevant fields into
         instances of the item type for the collection
         """
+        #TODO memoization broken, needs to account for args
         if not hasattr(self,'_items'):
             url_base = "%s/%s" % (METRO_API_URL,service)
             params = {'api_key':MetroAPI.api_key}
             if len(kwargs):
                 params.update(kwargs)
             qs = urlencode(params)
-            response = urlopen("%s?%s" % (url_base,qs))
+            url = "%s?%s" % (url_base,qs)
+            print url
+            response = urlopen(url)
             et = ET()
             et.parse(response)
             count = et.find('metadata').find('records_found')
             results = []
-            import pdb
-            pdb.set_trace()
+            
             if int(count.text) > 0:
                 items = et.find(self.list_elem)
                 for item in items.findall('item'):
@@ -54,6 +56,17 @@ class Routes(Service):
     
     def __get__(self,obj,objtype):
         self.get_service_data(ROUTES_ENDPOINT,carrier=obj.id)
+        return self
+    
+    #TODO DRY
+    def __repr__(self):
+        return repr(self._items)
+    def __len__(self):
+        return len(self.get())
+    def __getitem__(self,k):
+        return self._items[k]
+    def __contains__(self,elt):
+        return elt in self._items
 
 class Route(object):
     
@@ -122,9 +135,6 @@ class Carrier(object):
         return u"%s:%s:%s" % (self.id,self.text,self.code)
     def __str__(self):
         return self.__unicode__()
-
-
-
 
 class MetroAPI(object):
     """
