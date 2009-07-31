@@ -1,3 +1,4 @@
+import os
 from urllib import urlencode
 from urllib2 import urlopen
 try:
@@ -83,7 +84,6 @@ class Carriers(Service):
     """
     
     def __get__(self,obj,objtype):
-        #self.api_key = obj.api_key
         self.get_service_data(CARRIERS_ENDPOINT)
         return self
     
@@ -139,11 +139,48 @@ class Carrier(object):
 class MetroAPI(object):
     """
     The object responsible for communicating with the Metro API
-    """
-    api_key = ''
     
-    def __init__(self,api_key):
-        self.__class__.api_key = api_key
-        #setattr(Service,'api_key',api_key)
+    #this doctest assumes that you have set the API key
+    #using either the environment or a file in your home dir.
+    >>> from metro.api import MetroAPI
+    >>> metro = MetroAPI()
+    >>> metro.carriers
+    """
+    api_key = None
+    
+    def __init__(self,api_key=None):
         
-    carriers = Carriers(Carrier,'carriers',['id','text','code'])    
+        if (api_key is None or not len(api_key)) and self.api_key is None:
+            raise Exception(
+                """
+                You need to supply an API key. 
+                If you  do not have one, you'll need to register for an account at
+                http://developer.metro.net/
+                """)
+        self.__class__.api_key = api_key
+        
+    def _routes(self,carrier):
+        return carrier.routes
+    
+    carriers = Carriers(Carrier,'carriers',['id','text','code'])
+    routes = _routes
+    
+def initialize_api():
+    #check for the API key:
+    # 1. as the environment variable METRO_API_KEY
+    # 2. as the only text in the file $HOME/.metro_api_key
+    if 'METRO_API_KEY' in os.environ:
+            MetroAPI.api_key = os.environ['METRO_API_KEY']
+    else:
+        try:
+            #TODO clunky
+            home =  os.environ['HOME'] if 'HOME' in os.environ else '~'
+            f = open('%s/.metro_api_key' % home, 'r')
+            MetroAPI.api_key = f.readline().strip()
+            f.close()
+        except:
+            MetroAPI.api_key = ''
+            
+   
+    
+    
