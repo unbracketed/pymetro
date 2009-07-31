@@ -1,6 +1,6 @@
-============
+========
 Introduction
-============
+========
 
 pymetro is a wrapper around the `Metro Developer API. <http://developer.metro.net/>`_ Using pymetro you can work
 with the API in a Pythonic manner: results are returned as Python objects with support
